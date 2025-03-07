@@ -162,19 +162,28 @@ const componentTimelineData = [
 	},
 ];
 
-// Create a loading overlay with progress bar
+// Modify the loading overlay for better appearance
 const loadingOverlay = document.createElement("div");
 loadingOverlay.style.position = "fixed";
 loadingOverlay.style.top = "0";
 loadingOverlay.style.left = "0";
 loadingOverlay.style.width = "100%";
 loadingOverlay.style.height = "100%";
-loadingOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+loadingOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
 loadingOverlay.style.display = "flex";
 loadingOverlay.style.flexDirection = "column";
 loadingOverlay.style.alignItems = "center";
 loadingOverlay.style.justifyContent = "center";
 loadingOverlay.style.zIndex = "1000";
+
+// Add a title/logo above the loading bar
+const loadingTitle = document.createElement("div");
+loadingTitle.textContent = "ISO Tank Model Viewer";
+loadingTitle.style.color = "white";
+loadingTitle.style.fontSize = "24px";
+loadingTitle.style.fontWeight = "bold";
+loadingTitle.style.marginBottom = "30px";
+loadingTitle.style.fontFamily = "Arial, sans-serif";
 
 const progressContainer = document.createElement("div");
 progressContainer.style.width = "50%";
@@ -197,19 +206,44 @@ progressText.style.padding = "20px";
 progressText.style.fontFamily = "Arial, sans-serif";
 progressText.style.fontSize = "18px";
 
+// Create a detailed status element to show individual model progress
+const detailStatus = document.createElement("div");
+detailStatus.style.color = "#aaa";
+detailStatus.style.fontSize = "14px";
+detailStatus.style.fontFamily = "monospace";
+detailStatus.style.marginTop = "10px";
+detailStatus.style.textAlign = "left";
+detailStatus.style.width = "50%";
+detailStatus.style.maxWidth = "500px";
+
+loadingOverlay.appendChild(loadingTitle);
 progressContainer.appendChild(progressBar);
 loadingOverlay.appendChild(progressText);
 loadingOverlay.appendChild(progressContainer);
+loadingOverlay.appendChild(detailStatus);
 document.body.appendChild(loadingOverlay);
 
 // Track loading progress
 let totalModelsToLoad = 4; // Main model + 3 additional objects
 let loadedModels = 0;
-let currentProgress = {};
+let currentProgress = {
+	mainModel: 0,
+	ringModel: 0,
+	frameModel: 0,
+	boxFrameModel: 0,
+};
 
 // Function to update progress
 function updateProgress(modelId, percent) {
 	currentProgress[modelId] = percent;
+
+	// Update detailed status showing individual model progress
+	let detailText = "";
+	for (const [key, value] of Object.entries(currentProgress)) {
+		const formattedValue = Math.round(value);
+		detailText += `${key}: ${formattedValue}%\n`;
+	}
+	detailStatus.textContent = detailText;
 
 	// Calculate overall progress
 	let totalPercent = 0;
@@ -226,16 +260,27 @@ function updateProgress(modelId, percent) {
 		averagePercent
 	)}%`;
 
+	// If main model is loaded, you can optionally hide the overlay sooner
+	if (modelId === "mainModel" && percent >= 100) {
+		// Uncomment the next line if you want to hide the overlay as soon as the main model is loaded
+		// hideLoadingOverlay();
+	}
+
 	// If everything is loaded, hide the overlay
 	if (averagePercent >= 100) {
-		setTimeout(() => {
-			loadingOverlay.style.opacity = "0";
-			loadingOverlay.style.transition = "opacity 0.5s";
-			setTimeout(() => {
-				loadingOverlay.style.display = "none";
-			}, 500);
-		}, 500); // Short delay to show 100% complete
+		hideLoadingOverlay();
 	}
+}
+
+// Function to hide the loading overlay with animation
+function hideLoadingOverlay() {
+	setTimeout(() => {
+		loadingOverlay.style.opacity = "0";
+		loadingOverlay.style.transition = "opacity 0.5s";
+		setTimeout(() => {
+			loadingOverlay.style.display = "none";
+		}, 500);
+	}, 500); // Short delay to show 100% complete
 }
 
 // Function when a single model is completely loaded
@@ -1086,6 +1131,4 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Start the animation loop
-animate();
-
 animate();
