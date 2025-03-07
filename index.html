@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Three.js GLB Scene</title>
+		<style>
+			body {
+				margin: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				background-color: #0a0a0a;
+				color: #ffffff;
+			}
+			canvas {
+				display: block;
+			}
+			#controls {
+				position: absolute;
+				bottom: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: rgba(0, 0, 0, 0.5);
+				padding: 10px;
+				border-radius: 5px;
+				display: flex;
+				gap: 10px;
+				z-index: 100;
+			}
+			button {
+				padding: 8px 15px;
+				background: #2a2a2a;
+				color: white;
+				border: 1px solid #444;
+				border-radius: 4px;
+				cursor: pointer;
+				font-weight: bold;
+				transition: background 0.2s;
+			}
+			button:hover {
+				background: #444;
+			}
+			#frameInfo {
+				position: absolute;
+				top: 20px;
+				left: 20px;
+				background: rgba(20, 20, 20, 0.8);
+				color: white;
+				padding: 10px 15px;
+				border-radius: 8px;
+				font-family: monospace;
+				font-size: 14px;
+				z-index: 100;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+				border-left: 4px solid #4caf50;
+			}
+			#timelineContainer {
+				position: absolute;
+				top: 70px;
+				left: 20px;
+				width: 300px;
+				max-height: 80vh;
+				overflow-y: auto;
+				background: rgba(20, 20, 20, 0.8);
+				color: white;
+				padding: 15px;
+				border-radius: 8px;
+				z-index: 100;
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+			}
+			#timelineHeader {
+				margin-top: 0;
+				margin-bottom: 15px;
+				text-align: center;
+				font-size: 18px;
+				font-weight: 600;
+				color: #ffffff;
+				border-bottom: 1px solid #444;
+				padding-bottom: 10px;
+			}
+			#timelineTrack {
+				position: relative;
+				height: 4px;
+				background: #333;
+				margin: 20px 0;
+				border-radius: 2px;
+			}
+			#timelineCursor {
+				position: absolute;
+				width: 12px;
+				height: 12px;
+				background: #4caf50;
+				border-radius: 50%;
+				top: -4px;
+				transform: translateX(-50%);
+				transition: left 0.1s ease-out;
+				box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
+			}
+			.timeline-component {
+				position: relative;
+				width: 100%;
+				margin-bottom: 15px;
+				padding: 10px;
+				text-align: left;
+				background: #2a2a2a;
+				color: white;
+				border: none;
+				border-radius: 6px;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				font-size: 12px;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+			}
+			.timeline-component:hover {
+				background: #3a3a3a;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+			}
+			.timeline-component.active {
+				background: linear-gradient(to right, #333, #444);
+				border-left: 4px solid #4caf50;
+			}
+			.component-marker {
+				position: absolute;
+				width: 8px;
+				height: 8px;
+				background: #4caf50;
+				border-radius: 50%;
+				bottom: -22px;
+				transform: translateX(-50%);
+				z-index: 2;
+			}
+			.component-name {
+				font-weight: bold;
+				margin-bottom: 5px;
+				color: #ffffff;
+			}
+			.component-description {
+				color: #aaa;
+				font-size: 11px;
+				line-height: 1.4;
+			}
+			.frame-number {
+				font-weight: bold;
+				color: #4caf50;
+				display: inline-block;
+				padding: 2px 6px;
+				background: rgba(76, 175, 80, 0.1);
+				border-radius: 3px;
+				margin-bottom: 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Frame Info Display -->
+		<div id="frameInfo">Frame: 0</div>
+
+		<!-- Component Timeline with elegant UI -->
+		<div id="timelineContainer">
+			<h3 id="timelineHeader">Component Timeline</h3>
+
+			<!-- Visual Timeline Track -->
+			<div id="timelineTrack">
+				<div id="timelineCursor"></div>
+				<!-- Component markers will be added dynamically -->
+			</div>
+
+			<!-- Component buttons will be added here dynamically -->
+			<div id="componentTimeline"></div>
+		</div>
+
+		<!-- Timeline Controls -->
+		<!-- <div id="controls">
+			<button id="frame1">Frame 1</button>
+			<button id="frame200">Frame 200</button>
+			<button id="frame400">Frame 400</button>
+			<button id="frame720">Frame 720</button>
+		</div> -->
+
+		<!-- Three.js CDN -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+		<!-- GLTF Loader -->
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+		<!-- OBJ Loader -->
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+		<!-- Orbit Controls -->
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+		<!-- RGBE Loader for HDR -->
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+		<!-- MTLLoader -->
+		<script src="https://threejs.org/examples/js/loaders/MTLLoader.js"></script>
+		<!-- Custom Script -->
+		<script src="script.js"></script>
+	</body>
+</html>
